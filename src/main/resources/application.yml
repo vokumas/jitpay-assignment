@@ -1,0 +1,22 @@
+server:
+  port: 8080
+spring:
+# would obviously need different user and schema for dev, staging, and prod environments
+  datasource:
+    username: postgres
+    password: asdert1233.
+    url: jdbc:postgresql://localhost:5432/jitpay
+  liquibase:
+    change-log: classpath:db/db.changelog-master.xml
+    user: postgres
+    password: asdert1233.
+    enabled: 'true'
+    default-schema: userlocation
+  jpa:
+    show-sql: 'true'
+  data:
+    mongodb:
+      database: user-locations
+      port: 27017
+      host: localhost
+      uuid-representation: standard
