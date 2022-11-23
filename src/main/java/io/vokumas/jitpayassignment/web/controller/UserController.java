@@ -28,11 +28,11 @@ public class UserController {
 
     @PostMapping(value = "/location", consumes = "application/json")
     public ResponseEntity<UserDto> putLocation(@RequestBody @Valid PutUserLocationRequestDto dto) {
-        val newLocation = service.putUserLocation(dto);
+        val userWithNewLocation = service.putUserLocation(dto);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(newLocation);
+                .body(userWithNewLocation);
     }
 
     @RequestMapping(method = {RequestMethod.POST, RequestMethod.PUT}, consumes = "application/json")

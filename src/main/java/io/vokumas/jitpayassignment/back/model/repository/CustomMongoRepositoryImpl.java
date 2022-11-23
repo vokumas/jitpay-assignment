@@ -2,9 +2,8 @@ package io.vokumas.jitpayassignment.back.model.repository;
 
 import com.google.common.base.Preconditions;
 import io.vokumas.jitpayassignment.back.model.mongo.Location;
-import io.vokumas.jitpayassignment.back.model.mongo.User;
 import io.vokumas.jitpayassignment.back.model.mongo.MongoUserSingleLocation;
-import lombok.NonNull;
+import io.vokumas.jitpayassignment.back.model.mongo.User;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bson.BsonBinary;
@@ -30,8 +29,20 @@ public class CustomMongoRepositoryImpl implements CustomMongoRepository {
 
     private final MongoTemplate mongoTemplate;
 
+    /**
+     * Adds a Location to the User document.
+     * This method would not insert Location into there is User document if User.locations is null.
+     * This method guarantees to not insert a malformed User document in case User was not previously in the DB.
+     * @param userId userId to be searched by.
+     * @param location Location to be inserted.
+     * @return Optional<User> appended to with new Location or return empty Optional if no User present in the DB.
+     */
     @Override
-    public Optional<User> addLocation(@NonNull final UUID userId, @NonNull final Location location) {
+    public Optional<User> addLocation(final UUID userId, final Location location) {
+        Preconditions.checkArgument(userId != null,
+                "userId cannot be null");
+        Preconditions.checkArgument(location != null,
+                "location cannot be null");
         Preconditions.checkArgument(location.getCreatedOn() != null,
                 "location.createdOn cannot be null");
         Preconditions.checkArgument(location.getLongitude() != null,
@@ -47,8 +58,16 @@ public class CustomMongoRepositoryImpl implements CustomMongoRepository {
         return Optional.ofNullable(mongoTemplate.findAndModify(query, updateDef, options, User.class));
     }
 
+    /**
+     * Creates of updates a User document.
+     * Guarantees to insert a new User document if there were no in the DB.
+     * Guarantees to not update User.locations field.
+     * @param user User to be inserted or updated.
+     * @return User that has been inserted or updated.
+     */
     @Override
-    public User upsertUser(@NonNull User user) {
+    public User upsertUser(final User user) {
+        Preconditions.checkArgument(user != null, "user cannot be null");
         Preconditions.checkArgument(user.getUserId() != null, "user.userId cannot be null");
         Preconditions.checkArgument(user.getEmail() != null, "user.email cannot be null");
         Preconditions.checkArgument(user.getFirstName() != null, "user.firstName cannot be null");
@@ -65,8 +84,15 @@ public class CustomMongoRepositoryImpl implements CustomMongoRepository {
         return mongoTemplate.findAndModify(query, update, options, User.class);
     }
 
+    /**
+     * Finds User document by its ID with single latest Location in the User.locations list.
+     * Would return User.locations == null when no locations exist.
+     * @param userId userId to be searched by.
+     * @return A specifically created DTO to contain only one Location object instead of list.
+     */
     @Override
-    public Optional<MongoUserSingleLocation> findByUserIdAndLastLocation(@NonNull UUID userId) {
+    public Optional<MongoUserSingleLocation> findByUserIdAndLatestLocation(final UUID userId) {
+        Preconditions.checkArgument(userId != null,"userId cannot be null");
         BsonBinary binary = new BsonBinary(userId, UuidRepresentation.STANDARD);
         MatchOperation match = Aggregation.match(new Criteria("_id").is(binary));
 
@@ -87,20 +113,27 @@ public class CustomMongoRepositoryImpl implements CustomMongoRepository {
     }
 
     /**
-     * Finds user by its ID and returns locations in range of [from, to]
-     * As mongo db does not have a dedicated time for storing timestamps with timezone we have to resort to LocalDateTime
-     * and additionally this also leads us to a situation where we need convert both from and to params to UTC time zone
-     * so that we can query correctly.
-     * @param userId
-     * @param from
-     * @param to
+     * Finds User document by its ID and returns locations in range of [from, to]
+     * This method guarantees to only return empty Optional<User> where there is no User document by the userId in the DB,
+     * otherwise it returns a User with or without locations.
+     * Would return empty User.locations when no locations satisfy search criteria.
+     * As mongo db does not have a dedicated time for storing timestamps with timezone the implementations
+     * has to resort to LocalDateTime and additionally this also leads to a situation where it needs to be converted
+     * both from and to params to UTC time zone so that we can query correctly.
+     * @param userId userId to be searched by.
+     * @param from beginning date in the range query. Starting 'from'.
+     * @param to ending date in the range query. Going 'to'.
      * @return An Optional containing user if it exists with user.locations() filtered by createdOn BETWEEN range
      *         inclusive both sides. Returns empty Optional if no user found.
      */
     @Override
-    public Optional<User> findByUserIdAndLocationsInRange(@NonNull UUID userId,
-                                                          @NonNull LocalDateTime from,
-                                                          @NonNull LocalDateTime to) {
+    public Optional<User> findByUserIdAndLocationsInRange(final UUID userId,
+                                                          final LocalDateTime from,
+                                                          final LocalDateTime to) {
+        Preconditions.checkArgument(userId != null,"userId cannot be null");
+        Preconditions.checkArgument(from != null,"from cannot be null");
+        Preconditions.checkArgument(to != null,"to cannot be null");
+
         ZonedDateTime fromToZoned = from.atZone(ZoneId.systemDefault());
         ZonedDateTime fromUtcZoned = fromToZoned.withZoneSameInstant(ZoneId.of("UTC"));
         val fromAtUtc = fromUtcZoned.toLocalDateTime();

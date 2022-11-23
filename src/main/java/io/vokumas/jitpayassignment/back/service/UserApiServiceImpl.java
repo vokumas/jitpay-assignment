@@ -47,7 +47,7 @@ public class UserApiServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public UserSingleLocationDto getUserLatestLocation(UUID userId) {
-        val user = mongoRepository.findByUserIdAndLastLocation(userId)
+        val user = mongoRepository.findByUserIdAndLatestLocation(userId)
                 .orElseThrow(() -> new JITPayUserNotFoundException("User not found", userId));
 
         return userMapper.entityToDto(user);

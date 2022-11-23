@@ -1,4 +1,4 @@
-package io.vokumas.jitpayassignment.web.exception.advice;
+package io.vokumas.jitpayassignment.web.exception;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

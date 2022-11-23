@@ -1,4 +1,4 @@
-package io.vokumas.jitpayassignment;
+package io.vokumas.jitpayassignment.unit;
 
 import io.vokumas.jitpayassignment.back.model.dto.*;
 import io.vokumas.jitpayassignment.back.service.declaration.UserService;

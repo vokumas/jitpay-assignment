@@ -1,4 +1,4 @@
-package io.vokumas.jitpayassignment;
+package io.vokumas.jitpayassignment.integration;
 
 import io.vokumas.jitpayassignment.back.model.mongo.Location;
 import io.vokumas.jitpayassignment.back.model.mongo.User;
@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -136,7 +135,7 @@ public class JitpayMongoRepositoryIntegrationTests {
         userRepository.addLocation(userId, new Location(-13.97378, 138.91421, LocalDateTime.now().minus(5, ChronoUnit.DAYS)));
         userRepository.addLocation(userId, new Location(52.25742342295784, 10.540583401747602, latestLocationDate));
 
-        var retUser = userRepository.findByUserIdAndLastLocation(userId).get();
+        var retUser = userRepository.findByUserIdAndLatestLocation(userId).get();
 
         //These need to be converted to millis, since java stores fractions of a second in nanos,
         // while mongo can store only millis
@@ -159,7 +158,7 @@ public class JitpayMongoRepositoryIntegrationTests {
         userRepository.addLocation(userId, new Location(-13.97378, 138.91421, LocalDateTime.now().minus(5, ChronoUnit.DAYS)));
         userRepository.addLocation(userId, new Location(52.25742342295784, 10.540583401747602, latestLocationDate));
 
-        var retUser = userRepository.findByUserIdAndLastLocation(UUID.randomUUID());
+        var retUser = userRepository.findByUserIdAndLatestLocation(UUID.randomUUID());
 
         assertTrue(retUser.isEmpty());
 
@@ -314,37 +313,4 @@ public class JitpayMongoRepositoryIntegrationTests {
         assertTrue(user.isEmpty());
     }
 
-    //This belongs to unit test rather than here. For a real application with real tests.
-    @Test
-    void shouldThrowIllegalArgumentException_upsertUser() {
-        assertThatThrownBy(() -> {
-            userRepository.addLocation(null, null);
-        })
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("userId is marked non-null but is null");
-
-        assertThatThrownBy(() -> {
-            userRepository.addLocation(UUID.randomUUID(), null);
-        })
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("location is marked non-null but is null");
-
-        assertThatThrownBy(() -> {
-            userRepository.addLocation(UUID.randomUUID(), new Location(null, null, null));
-        })
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("location.createdOn cannot be null");
-
-        assertThatThrownBy(() -> {
-            userRepository.addLocation(UUID.randomUUID(), new Location(null, null, LocalDateTime.now()));
-        })
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("location.longitude cannot be null");
-
-        assertThatThrownBy(() -> {
-            userRepository.addLocation(UUID.randomUUID(), new Location(null, 2.0, LocalDateTime.now()));
-        })
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("location.latitude cannot be null");
-    }
 }

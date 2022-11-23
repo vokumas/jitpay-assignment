@@ -12,7 +12,7 @@ public interface CustomMongoRepository {
 
     Optional<User> addLocation(UUID userId, Location location);
     User upsertUser(User user);
-    Optional<MongoUserSingleLocation> findByUserIdAndLastLocation(UUID userId);
+    Optional<MongoUserSingleLocation> findByUserIdAndLatestLocation(UUID userId);
     Optional<User> findByUserIdAndLocationsInRange(UUID userId, LocalDateTime from, LocalDateTime to);
 
 }

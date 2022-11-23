@@ -1,9 +1,9 @@
 package io.vokumas.jitpayassignment.web.exception.advice;
 
 import io.vokumas.jitpayassignment.back.exception.JITPayUserNotFoundException;
+import io.vokumas.jitpayassignment.web.exception.RestErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.slf4j.Marker;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,16 +23,15 @@ public class CommonExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({Exception.class, RuntimeException.class})
     public final ResponseEntity<RestErrorResponse> handleException(RuntimeException ex) {
-        val logId = getLogId();
+        var message = "Oops. Something wrong happened";
+        val logId = getLogId("error", message, ex);
 
         val response = new RestErrorResponse(
                 -1,
-                "Oops. Something wrong happened",
+                message.toString(),
                 logId,
                 null
         );
-
-        log.error("Unexpected error occurred. Log id {} for details", logId, ex);
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -41,16 +40,15 @@ public class CommonExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(JITPayUserNotFoundException.class)
     public final ResponseEntity<RestErrorResponse> handleException(JITPayUserNotFoundException ex) {
-        val logId = getLogId();
+        var message = "User not found";
+        val logId = getLogId("info", message, ex);
 
         val response = new RestErrorResponse(
                 -1,
-                "User not found",
+                message,
                 logId,
                 null
         );
-
-        log.warn("User {} not found. Log id {} for details", ex.getUserId(), logId, ex);
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
@@ -60,7 +58,9 @@ public class CommonExceptionHandler extends ResponseEntityExceptionHandler {
     @Override
     public final ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
-        val logId = getLogId();
+
+        var message = "Bad request. There are some request data errors";
+        val logId = getLogId("error", message, ex);
 
         var validationErrors = new HashMap<String, String>();
         ex.getBindingResult().getFieldErrors()
@@ -68,7 +68,7 @@ public class CommonExceptionHandler extends ResponseEntityExceptionHandler {
 
         val response = new RestErrorResponse(
                 -1,
-                "Bad request. There are some request data errors",
+                message,
                 logId,
                 validationErrors
         );
@@ -83,11 +83,12 @@ public class CommonExceptionHandler extends ResponseEntityExceptionHandler {
             MissingServletRequestParameterException ex, HttpHeaders headers,
             HttpStatus status, WebRequest request) {
 
-        val logId = getLogId();
+        var message = "Bad request. There are some parameters missing";
+        val logId = getLogId("error", message, ex);
 
         val response = new RestErrorResponse(
                 -1,
-                "Bad request. There are some parameters missing",
+                message,
                 logId,
                 null
         );
@@ -97,7 +98,18 @@ public class CommonExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(response);
     }
 
-    private static UUID getLogId() {
-        return UUID.randomUUID();
+    private static UUID getLogId(String level, String message, Throwable cause) {
+        var logId = UUID.randomUUID();
+        message = message + ". LogId: {}";
+
+        switch (level) {
+            case "info" -> log.info(message, logId, cause);
+            case "error" -> log.error(message, logId, cause);
+            case "warn" -> log.warn(message, logId, cause);
+            case "debug" -> log.debug(message, logId, cause);
+            case "trace" -> log.trace(message, logId, cause);
+        }
+
+        return logId;
     }
 }
