@@ -4,6 +4,7 @@ This piece of software is a part of JITPay assignment task.
 This application implements the API provided by externally and not included in this document.
 
 ## Core technical stack
+* Java 17
 * Spring boot 2.7.5
 * Spring MVC. Non-reactive, no WebFlux
 * MongoDB as data layer in a non-reactive manner.
